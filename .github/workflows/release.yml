@@ -97,12 +97,9 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: "24"
+      - name: Upgrade npm for OIDC support
+        run: npm install -g npm@latest
 
       - name: Publish to npm
-        run: |
-          cd npm
-          npm publish --access public
+        working-directory: npm
+        run: npm publish --access public
