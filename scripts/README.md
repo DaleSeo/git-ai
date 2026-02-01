@@ -12,6 +12,15 @@ The script will automatically use `cargo set-version` if available, otherwise fa
 ## Quick Reference
 
 ### Bump version
+
+Using semantic keywords (recommended):
+```sh
+./scripts/bump-version.sh patch   # 0.0.3 → 0.0.4
+./scripts/bump-version.sh minor   # 0.0.3 → 0.1.0
+./scripts/bump-version.sh major   # 0.0.3 → 1.0.0
+```
+
+Or set explicit version:
 ```sh
 ./scripts/bump-version.sh 0.0.4
 ```
@@ -31,7 +40,7 @@ Verifies that Cargo.toml and npm/package.json have the same version.
 
 ```sh
 # 1. Bump version
-./scripts/bump-version.sh 0.0.4
+./scripts/bump-version.sh patch   # or: minor, major, 0.0.4
 
 # 2. Verify changes
 git diff
@@ -42,7 +51,7 @@ git commit -m 'chore: bump version to 0.0.4'
 
 # 4. Tag and push
 git tag v0.0.4
-git push && git push --tags
+git push --follow-tags
 ```
 
 GitHub Actions will automatically:

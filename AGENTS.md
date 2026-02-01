@@ -68,7 +68,10 @@ cargo build --release
 Update version in both Cargo.toml and npm/package.json:
 
 ```sh
-./scripts/bump-version.sh 0.0.4
+./scripts/bump-version.sh patch   # 0.0.3 → 0.0.4
+./scripts/bump-version.sh minor   # 0.0.3 → 0.1.0
+./scripts/bump-version.sh major   # 0.0.3 → 1.0.0
+./scripts/bump-version.sh 0.0.4   # explicit version
 ```
 
 Verify versions are in sync:
@@ -79,9 +82,9 @@ Verify versions are in sync:
 
 ### Release Process
 
-1. Bump version: `./scripts/bump-version.sh 0.0.4`
+1. Bump version: `./scripts/bump-version.sh patch`
 2. Commit: `git add -A && git commit -m 'chore: bump version to 0.0.4'`
-3. Tag: `git tag v0.0.4 && git push --tags`
+3. Tag: `git tag v0.0.4 && git push --follow-tags`
 4. GitHub Actions will auto-build and publish to npm
 
 ## TODO
