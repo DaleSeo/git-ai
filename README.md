@@ -7,13 +7,13 @@ AI-powered Git assistant for commit messages, PR descriptions, and more.
 ### Via npm (recommended)
 
 ```sh
-npm install -g git-ai
+npm install -g @daleseo/git-ai
 ```
 
 Or run directly with npx:
 
 ```sh
-npx git-ai commit
+npx @daleseo/git-ai commit
 ```
 
 ### Build from source
