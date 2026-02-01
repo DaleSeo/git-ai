@@ -49,6 +49,38 @@ impl Git {
         Ok(diff)
     }
 
+    /// Check if there are unstaged changes
+    pub fn has_unstaged_changes() -> Result<bool, GitError> {
+        let output = Command::new("git")
+            .args(["diff", "--no-color"])
+            .output()?;
+
+        if !output.status.success() {
+            return Err(GitError::CommandFailed(
+                String::from_utf8_lossy(&output.stderr).to_string(),
+            ));
+        }
+
+        let diff = String::from_utf8_lossy(&output.stdout).to_string();
+        Ok(!diff.trim().is_empty())
+    }
+
+    /// Check if there are untracked files
+    pub fn has_untracked_files() -> Result<bool, GitError> {
+        let output = Command::new("git")
+            .args(["ls-files", "--others", "--exclude-standard"])
+            .output()?;
+
+        if !output.status.success() {
+            return Err(GitError::CommandFailed(
+                String::from_utf8_lossy(&output.stderr).to_string(),
+            ));
+        }
+
+        let files = String::from_utf8_lossy(&output.stdout).to_string();
+        Ok(!files.trim().is_empty())
+    }
+
     /// Stage all changes
     pub fn stage_all() -> Result<(), GitError> {
         let output = Command::new("git").args(["add", "-A"]).output()?;

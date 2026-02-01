@@ -3,7 +3,7 @@ use crate::git::Git;
 use crate::llm::LlmClient;
 use clap::Args;
 use colored::Colorize;
-use dialoguer::{theme::ColorfulTheme, Select};
+use dialoguer::{theme::ColorfulTheme, Confirm, Select};
 use std::io::IsTerminal;
 
 #[derive(Args)]
@@ -35,6 +35,39 @@ pub async fn run(args: CommitArgs) -> anyhow::Result<()> {
     // Get staged diff
     let diff = match Git::get_staged_diff() {
         Ok(d) => d,
+        Err(crate::git::GitError::NoStagedChanges) => {
+            // Check for unstaged or untracked changes
+            let has_unstaged = Git::has_unstaged_changes().unwrap_or(false);
+            let has_untracked = Git::has_untracked_files().unwrap_or(false);
+
+            if has_unstaged || has_untracked {
+                // Ask user if they want to stage all changes
+                let should_stage = if std::io::stdin().is_terminal() {
+                    // Interactive prompt in TTY
+                    Confirm::with_theme(&ColorfulTheme::default())
+                        .with_prompt("No staged changes. Stage all changes and continue?")
+                        .default(true)
+                        .interact()
+                        .unwrap_or(false)
+                } else {
+                    // Auto-stage in non-TTY (like -a flag)
+                    true
+                };
+
+                if should_stage {
+                    Git::stage_all()?;
+                    println!("{}", "Staged all changes.".dimmed());
+                    // Retry getting staged diff
+                    Git::get_staged_diff()?
+                } else {
+                    eprintln!("{}", "Aborted.".yellow());
+                    std::process::exit(1);
+                }
+            } else {
+                eprintln!("{} {}", "Error:".red().bold(), "No changes to commit");
+                std::process::exit(1);
+            }
+        }
         Err(e) => {
             eprintln!("{} {}", "Error:".red().bold(), e);
             std::process::exit(1);

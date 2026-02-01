@@ -61,6 +61,54 @@ cargo build --release
 ./target/release/git-ai commit --dry-run
 ```
 
+### Testing
+
+git-ai behaves differently in TTY (interactive terminal) vs non-TTY (CI/CD, scripts) environments.
+
+#### Non-TTY Environment (Claude Code, CI/CD)
+
+Auto-selects first suggestion without prompting:
+
+```sh
+# Create test changes
+echo "# Test" >> README.md
+git add README.md
+
+# Test message generation (no commit)
+./target/release/git-ai commit --dry-run
+
+# Test actual commit (auto-selects first suggestion)
+./target/release/git-ai commit
+
+# Clean up
+git reset HEAD~1
+git restore README.md
+```
+
+#### TTY Environment (Normal Terminal)
+
+Interactive selection UI with arrow keys:
+
+```sh
+# In a regular terminal (Terminal.app, iTerm, etc.)
+echo "# Test" >> README.md
+git add README.md
+
+# Interactive selection UI (↑↓ arrows, Enter to confirm)
+./target/release/git-ai commit
+
+# Clean up
+git reset HEAD~1
+git restore README.md
+```
+
+#### Force Auto-Selection
+
+```sh
+# Skip interactive prompt even in TTY
+./target/release/git-ai commit --yes
+```
+
 ## Deployment
 
 ### Version Management
