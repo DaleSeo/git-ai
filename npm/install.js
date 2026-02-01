@@ -37,7 +37,7 @@ async function install() {
   const { platform, arch } = getPlatformInfo();
   const version = require("./package.json").version;
 
-  const ext = platform === "windows" ? ".zip" : ".tar.gz";
+  const ext = ".tar.gz"; // All platforms use tar.gz
   const assetName = `${BINARY_NAME}-${platform}-${arch}${ext}`;
   const downloadUrl = `https://github.com/${REPO_OWNER}/${REPO_NAME}/releases/download/v${version}/${assetName}`;
 
@@ -54,14 +54,13 @@ async function install() {
   try {
     await downloadFile(downloadUrl, archivePath);
 
-    // Extract archive
-    if (platform === "windows") {
-      execSync(`tar -xf "${archivePath}" -C "${binDir}"`, { stdio: "inherit" });
-    } else {
-      execSync(`tar -xzf "${archivePath}" -C "${binDir}"`, {
-        stdio: "inherit",
-      });
-      // Make binary executable
+    // Extract archive (all platforms use tar.gz)
+    execSync(`tar -xzf "${archivePath}" -C "${binDir}"`, {
+      stdio: "inherit",
+    });
+
+    // Make binary executable (Unix only)
+    if (platform !== "windows") {
       const binaryPath = path.join(binDir, BINARY_NAME);
       fs.chmodSync(binaryPath, 0o755);
     }
