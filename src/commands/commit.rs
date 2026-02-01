@@ -1,4 +1,4 @@
-use crate::config::Config;
+use crate::config::{AutoStage, Config, Format, Language};
 use crate::git::Git;
 use crate::llm::LlmClient;
 use clap::Args;
@@ -26,6 +26,9 @@ pub struct CommitArgs {
 }
 
 pub async fn run(args: CommitArgs) -> anyhow::Result<()> {
+    // Load config early to check auto_stage setting
+    let config = Config::load()?;
+
     // Stage all changes if requested
     if args.all {
         Git::stage_all()?;
@@ -41,17 +44,34 @@ pub async fn run(args: CommitArgs) -> anyhow::Result<()> {
             let has_untracked = Git::has_untracked_files().unwrap_or(false);
 
             if has_unstaged || has_untracked {
-                // Ask user if they want to stage all changes
-                let should_stage = if std::io::stdin().is_terminal() {
-                    // Interactive prompt in TTY
-                    Confirm::with_theme(&ColorfulTheme::default())
-                        .with_prompt("No staged changes. Stage all changes and continue?")
-                        .default(true)
-                        .interact()
-                        .unwrap_or(false)
-                } else {
-                    // Auto-stage in non-TTY (like -a flag)
-                    true
+                // Determine whether to auto-stage based on config
+                let should_stage = match config.options.auto_stage {
+                    AutoStage::Always => true,
+                    AutoStage::Never => {
+                        eprintln!("{} {}", "Error:".red().bold(), "No staged changes");
+                        eprintln!();
+                        eprintln!("{}", "You have unstaged changes. Try:".yellow());
+                        eprintln!("  {} stage specific files first", "git add <files>".cyan());
+                        eprintln!(
+                            "  {} stage all changes and commit",
+                            "git ai commit -a".cyan()
+                        );
+                        std::process::exit(1);
+                    }
+                    AutoStage::Ask => {
+                        // Ask user if they want to stage all changes
+                        if std::io::stdin().is_terminal() {
+                            // Interactive prompt in TTY
+                            Confirm::with_theme(&ColorfulTheme::default())
+                                .with_prompt("No staged changes. Stage all changes and continue?")
+                                .default(true)
+                                .interact()
+                                .unwrap_or(false)
+                        } else {
+                            // Auto-stage in non-TTY (like -a flag)
+                            true
+                        }
+                    }
                 };
 
                 if should_stage {
@@ -73,9 +93,6 @@ pub async fn run(args: CommitArgs) -> anyhow::Result<()> {
             std::process::exit(1);
         }
     };
-
-    // Load config
-    let config = Config::load()?;
 
     // Build prompt
     let prompt = build_commit_prompt(&diff, &config, args.r#type.as_deref());
@@ -133,25 +150,87 @@ pub async fn run(args: CommitArgs) -> anyhow::Result<()> {
 }
 
 fn build_commit_prompt(diff: &str, config: &Config, commit_type: Option<&str>) -> String {
-    let language_instruction = match config.options.language.as_str() {
-        "ko" => "Write the commit message in Korean.",
-        _ => "Write the commit message in English.",
+    let language_instruction = match config.options.language {
+        Language::Ko => "Write the commit message in Korean.",
+        Language::En => "Write the commit message in English.",
     };
 
-    let format_instruction = match config.options.format.as_str() {
-        "conventional" => {
+    let format_instruction = match config.options.format {
+        Format::Conventional => {
             let type_hint = if let Some(t) = commit_type {
                 format!("Use '{}' as the commit type.", t)
             } else {
-                "Choose the appropriate type (feat, fix, docs, style, refactor, test, chore)."
+                "Choose the appropriate type: feat, fix, docs, style, refactor, test, chore"
                     .to_string()
             };
             format!(
-                "Use the Conventional Commits format: <type>(<optional scope>): <description>. {}",
+                r#"Use Conventional Commits format WITHOUT scope. Follow this pattern EXACTLY:
+  - type: description
+
+Examples:
+  - feat: add user authentication
+  - fix: resolve timeout issue
+  - docs: update README with examples
+
+IMPORTANT:
+  - Do NOT use scope: ❌ feat(api): description
+  - Only use type and description: ✅ feat: description
+  - {}"#,
                 type_hint
             )
         }
-        _ => "Write a clear, concise commit message.".to_string(),
+        Format::ConventionalScoped => {
+            let type_hint = if let Some(t) = commit_type {
+                format!("Use '{}' as the commit type.", t)
+            } else {
+                "Choose the appropriate type: feat, fix, docs, style, refactor, test, chore"
+                    .to_string()
+            };
+            format!(
+                r#"Use Conventional Commits format WITH scope. Follow this pattern EXACTLY:
+  - type(scope): description
+
+Examples:
+  - feat(auth): add user authentication
+  - fix(api): resolve timeout issue
+  - docs(readme): update installation guide
+
+IMPORTANT:
+  - Always include scope: ✅ feat(api): description
+  - Never omit scope: ❌ feat: description
+  - Never nest parentheses: ❌ feat(api): fix)
+  - {}"#,
+                type_hint
+            )
+        }
+        Format::Gitmoji => {
+            format!(
+                r#"Use Gitmoji with Conventional Commits format. Follow this pattern EXACTLY:
+  - emoji type: description
+
+Gitmoji mapping:
+  - ✨ feat: new feature
+  - 🐛 fix: bug fix
+  - 📝 docs: documentation
+  - 💄 style: formatting, styling
+  - ♻️ refactor: code refactoring
+  - ✅ test: adding tests
+  - 🔧 chore: maintenance
+
+Examples:
+  - ✨ feat: add user authentication
+  - 🐛 fix: resolve timeout issue
+  - 📝 docs: update README with examples
+  - ♻️ refactor: simplify error handling
+
+IMPORTANT:
+  - Always start with the emoji: ✅ ✨ feat: description
+  - Never omit emoji: ❌ feat: description
+  - Use the correct emoji for the type
+  - Keep type keyword after emoji for clarity"#
+            )
+        }
+        Format::Free => "Write a clear, concise commit message.".to_string(),
     };
 
     format!(
@@ -160,16 +239,21 @@ fn build_commit_prompt(diff: &str, config: &Config, commit_type: Option<&str>) -
 Instructions:
 - {language_instruction}
 - {format_instruction}
-- Keep the subject line under 72 characters.
-- Be specific about what changed.
-- Generate 3 different suggestions, each on a new line starting with a number (1., 2., 3.).
+- Keep the subject line under 72 characters
+- Be specific about what changed
+- Generate 3 different suggestions
+- Output ONLY the commit messages, one per line, starting with "1. ", "2. ", "3. "
+- Do NOT include any explanations, markdown formatting, or extra text
 
 Git diff:
 ```
 {diff}
 ```
 
-Generate 3 commit message suggestions:"#,
+Output format (follow EXACTLY):
+1. type: description
+2. type(scope): description
+3. type: description"#,
         language_instruction = language_instruction,
         format_instruction = format_instruction,
         diff = truncate_diff(diff, 4000)

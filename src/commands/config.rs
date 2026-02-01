@@ -1,4 +1,4 @@
-use crate::config::Config;
+use crate::config::{AutoStage, Config, Format, Language};
 use clap::Args;
 use colored::Colorize;
 
@@ -20,13 +20,17 @@ pub struct ConfigArgs {
     #[arg(long)]
     pub base_url: Option<String>,
 
-    /// Set the language for generated messages (en, ko)
+    /// Set the language for generated messages
     #[arg(long)]
-    pub lang: Option<String>,
+    pub lang: Option<Language>,
 
-    /// Set the commit message format (conventional, free)
+    /// Set the commit message format
     #[arg(long)]
-    pub format: Option<String>,
+    pub format: Option<Format>,
+
+    /// Set auto-stage behavior
+    #[arg(long)]
+    pub auto_stage: Option<AutoStage>,
 
     /// Set the Ollama server URL
     #[arg(long)]
@@ -67,6 +71,11 @@ pub async fn run(args: ConfigArgs) -> anyhow::Result<()> {
         changed = true;
     }
 
+    if let Some(auto_stage) = args.auto_stage {
+        config.options.auto_stage = auto_stage;
+        changed = true;
+    }
+
     if let Some(ollama_url) = args.ollama_url {
         config.provider.ollama_url = ollama_url;
         changed = true;
@@ -99,8 +108,24 @@ pub async fn run(args: ConfigArgs) -> anyhow::Result<()> {
     if config.provider.name == "ollama" {
         println!("  {} {}", "Ollama URL:".cyan(), config.provider.ollama_url);
     }
-    println!("  {} {}", "Language:".cyan(), config.options.language);
-    println!("  {} {}", "Format:".cyan(), config.options.format);
+    println!(
+        "  {} {} {}",
+        "Language:".cyan(),
+        config.options.language,
+        "(en, ko)".dimmed()
+    );
+    println!(
+        "  {} {} {}",
+        "Format:".cyan(),
+        config.options.format,
+        "(conventional, conventional-scoped, gitmoji, free)".dimmed()
+    );
+    println!(
+        "  {} {} {}",
+        "Auto-stage:".cyan(),
+        config.options.auto_stage,
+        "(ask, always, never)".dimmed()
+    );
     println!("─────────────────────────────────");
     println!(
         "\n  Config file: {}",

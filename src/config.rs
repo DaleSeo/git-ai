@@ -1,3 +1,4 @@
+use clap::ValueEnum;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 use thiserror::Error;
@@ -10,6 +11,82 @@ pub enum ConfigError {
     ParseError(#[from] toml::de::Error),
     #[error("Failed to serialize config: {0}")]
     SerializeError(#[from] toml::ser::Error),
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ValueEnum)]
+#[serde(rename_all = "lowercase")]
+pub enum Language {
+    En,
+    Ko,
+}
+
+impl Default for Language {
+    fn default() -> Self {
+        Self::En
+    }
+}
+
+impl std::fmt::Display for Language {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::En => write!(f, "en"),
+            Self::Ko => write!(f, "ko"),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ValueEnum)]
+#[serde(rename_all = "kebab-case")]
+pub enum Format {
+    /// Conventional Commits without scope: type: description
+    Conventional,
+    /// Conventional Commits with scope: type(scope): description
+    ConventionalScoped,
+    /// Gitmoji with conventional: 🎨 feat: description
+    Gitmoji,
+    /// Free-form commit message
+    Free,
+}
+
+impl Default for Format {
+    fn default() -> Self {
+        Self::Conventional
+    }
+}
+
+impl std::fmt::Display for Format {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Conventional => write!(f, "conventional"),
+            Self::ConventionalScoped => write!(f, "conventional-scoped"),
+            Self::Gitmoji => write!(f, "gitmoji"),
+            Self::Free => write!(f, "free"),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ValueEnum)]
+#[serde(rename_all = "lowercase")]
+pub enum AutoStage {
+    Ask,
+    Always,
+    Never,
+}
+
+impl Default for AutoStage {
+    fn default() -> Self {
+        Self::Ask
+    }
+}
+
+impl std::fmt::Display for AutoStage {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Ask => write!(f, "ask"),
+            Self::Always => write!(f, "always"),
+            Self::Never => write!(f, "never"),
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -59,27 +136,22 @@ fn default_ollama_url() -> String {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct OptionsConfig {
-    #[serde(default = "default_language")]
-    pub language: String,
-    #[serde(default = "default_format")]
-    pub format: String,
+    #[serde(default)]
+    pub language: Language,
+    #[serde(default)]
+    pub format: Format,
+    #[serde(default)]
+    pub auto_stage: AutoStage,
 }
 
 impl Default for OptionsConfig {
     fn default() -> Self {
         Self {
-            language: default_language(),
-            format: default_format(),
+            language: Language::default(),
+            format: Format::default(),
+            auto_stage: AutoStage::default(),
         }
     }
-}
-
-fn default_language() -> String {
-    "en".to_string()
-}
-
-fn default_format() -> String {
-    "conventional".to_string()
 }
 
 impl Config {

@@ -38,12 +38,24 @@ git ai config
 Manage git-ai configuration.
 
 ```sh
-git ai config                          # Show current configuration
-git ai config --provider openai        # Set LLM provider
-git ai config --model gpt-4o           # Set model
-git ai config --lang ko                # Set language (en, ko)
-git ai config --format conventional    # Set commit format
+git ai config                               # Show current configuration
+git ai config --provider openai             # Set LLM provider
+git ai config --model gpt-4o                # Set model
+git ai config --lang ko                     # Set language (en, ko)
+git ai config --format conventional-scoped  # Set commit format
+git ai config --auto-stage always           # Auto-stage behavior
 ```
+
+**Format options:**
+- `conventional` (default): `type: description` (no scope)
+- `conventional-scoped`: `type(scope): description` (scope required)
+- `gitmoji`: `✨ feat: description` (emoji + type)
+- `free`: Free-form commit message
+
+**Auto-stage options:**
+- `ask` (default): Prompt to stage unstaged changes (auto-yes in non-TTY)
+- `always`: Automatically stage all changes when no staged changes found
+- `never`: Always require manual staging (show error + help message)
 
 Supported providers:
 
@@ -85,8 +97,9 @@ ollama_url = "http://localhost:11434"
 # api_key = "sk-..."  # For OpenAI/Anthropic
 
 [options]
-language = "en"
-format = "conventional"
+language = "en"          # en, ko
+format = "conventional"  # conventional, conventional-scoped, gitmoji, free
+auto_stage = "ask"       # ask, always, never
 ```
 
 ## Environment Variables

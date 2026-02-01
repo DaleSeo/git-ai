@@ -32,12 +32,19 @@ npm/                  # npm package wrapper for binary distribution
 ## Commands
 
 ```sh
-git ai config                    # Show/set configuration
-git ai config --provider openai --base-url https://api.together.xyz/v1
-git ai commit                    # Generate commit message from staged diff
-git ai commit --dry-run          # Preview without committing
-git ai pr                        # Generate PR title and description
-git ai pr --copy                 # Copy to clipboard
+# Configuration
+git ai config                          # Show current configuration
+git ai config --provider openai        # Set LLM provider
+git ai config --auto-stage always      # Auto-stage unstaged changes (ask/always/never)
+
+# Commit
+git ai commit                          # Generate commit message from staged diff
+git ai commit -a                       # Stage all changes and commit
+git ai commit --dry-run                # Preview without committing
+
+# Pull Request
+git ai pr                              # Generate PR title and description
+git ai pr --copy                       # Copy to clipboard
 ```
 
 ## Supported LLM Providers

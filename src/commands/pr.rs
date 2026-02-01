@@ -1,4 +1,4 @@
-use crate::config::Config;
+use crate::config::{Config, Language};
 use crate::git::Git;
 use crate::llm::LlmClient;
 use arboard::Clipboard;
@@ -96,9 +96,9 @@ pub async fn run(args: PrArgs) -> anyhow::Result<()> {
 }
 
 fn build_pr_prompt(diff: &str, commits: &[String], config: &Config) -> String {
-    let language_instruction = match config.options.language.as_str() {
-        "ko" => "Write the PR description in Korean.",
-        _ => "Write the PR description in English.",
+    let language_instruction = match config.options.language {
+        Language::Ko => "Write the PR description in Korean.",
+        Language::En => "Write the PR description in English.",
     };
 
     let commits_section = if !commits.is_empty() {
