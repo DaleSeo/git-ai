@@ -1,0 +1,33 @@
+{
+  "name": "git-ai",
+  "version": "0.1.0",
+  "description": "AI-powered Git assistant for commit messages, PR descriptions, and more",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/user/git-ai"
+  },
+  "keywords": [
+    "git",
+    "ai",
+    "commit",
+    "llm",
+    "openai",
+    "anthropic",
+    "ollama"
+  ],
+  "bin": {
+    "git-ai": "./bin.js"
+  },
+  "scripts": {
+    "postinstall": "node install.js"
+  },
+  "files": [
+    "bin.js",
+    "index.js",
+    "install.js"
+  ],
+  "engines": {
+    "node": ">=16"
+  }
+}
