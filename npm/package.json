@@ -1,6 +1,6 @@
 {
   "name": "@daleseo/git-ai",
-  "version": "0.0.6",
+  "version": "0.1.0",
   "description": "AI-powered Git assistant for commit messages, PR descriptions, and more",
   "license": "MIT",
   "repository": {
