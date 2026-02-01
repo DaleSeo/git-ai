@@ -1,11 +1,11 @@
 {
   "name": "git-ai",
-  "version": "0.1.0",
+  "version": "0.0.1",
   "description": "AI-powered Git assistant for commit messages, PR descriptions, and more",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/user/git-ai"
+    "url": "https://github.com/DaleSeo/git-ai"
   },
   "keywords": [
     "git",

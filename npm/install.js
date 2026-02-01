@@ -4,7 +4,7 @@ const https = require("https");
 const { execSync } = require("child_process");
 const { getPlatformInfo, BINARY_NAME } = require("./index.js");
 
-const REPO_OWNER = "user";
+const REPO_OWNER = "DaleSeo";
 const REPO_NAME = "git-ai";
 
 async function downloadFile(url, dest) {
