@@ -4,6 +4,7 @@ use crate::llm::LlmClient;
 use clap::Args;
 use colored::Colorize;
 use dialoguer::{theme::ColorfulTheme, Select};
+use std::io::IsTerminal;
 
 #[derive(Args)]
 pub struct CommitArgs {
@@ -79,7 +80,7 @@ pub async fn run(args: CommitArgs) -> anyhow::Result<()> {
     }
 
     // Select message
-    let selected = if args.yes || messages.len() == 1 {
+    let selected = if args.yes || messages.len() == 1 || !std::io::stdin().is_terminal() {
         messages[0].clone()
     } else {
         let selection = Select::with_theme(&ColorfulTheme::default())
