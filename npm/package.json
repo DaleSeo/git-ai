@@ -25,7 +25,8 @@
   "files": [
     "bin.js",
     "index.js",
-    "install.js"
+    "install.js",
+    "../README.md"
   ],
   "engines": {
     "node": ">=16"

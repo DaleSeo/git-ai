@@ -63,9 +63,26 @@ cargo build --release
 
 ## Deployment
 
-1. Set `NPM_TOKEN` in GitHub Secrets
-2. Create tag: `git tag v0.1.0 && git push --tags`
-3. GitHub Actions will auto-build and publish to npm
+### Version Management
+
+Update version in both Cargo.toml and npm/package.json:
+
+```sh
+./scripts/bump-version.sh 0.0.4
+```
+
+Verify versions are in sync:
+
+```sh
+./scripts/check-version-sync.sh
+```
+
+### Release Process
+
+1. Bump version: `./scripts/bump-version.sh 0.0.4`
+2. Commit: `git add -A && git commit -m 'chore: bump version to 0.0.4'`
+3. Tag: `git tag v0.0.4 && git push --tags`
+4. GitHub Actions will auto-build and publish to npm
 
 ## TODO
 
