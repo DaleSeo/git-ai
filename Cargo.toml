@@ -1,6 +1,6 @@
 [package]
 name = "git-ai"
-version = "0.0.5"
+version = "0.0.6"
 edition = "2021"
 description = "AI-powered Git assistant for commit messages, PR descriptions, and more"
 license = "MIT"

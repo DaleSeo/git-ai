@@ -1,6 +1,6 @@
 {
   "name": "@daleseo/git-ai",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "AI-powered Git assistant for commit messages, PR descriptions, and more",
   "license": "MIT",
   "repository": {
@@ -20,13 +20,14 @@
     "git-ai": "./bin.js"
   },
   "scripts": {
-    "postinstall": "node install.js"
+    "postinstall": "node install.js",
+    "prepublishOnly": "cp ../README.md README.md"
   },
   "files": [
     "bin.js",
     "index.js",
     "install.js",
-    "../README.md"
+    "README.md"
   ],
   "engines": {
     "node": ">=16"

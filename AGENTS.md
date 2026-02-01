@@ -83,9 +83,12 @@ Verify versions are in sync:
 ### Release Process
 
 1. Bump version: `./scripts/bump-version.sh patch`
-2. Commit: `git add -A && git commit -m 'chore: bump version to 0.0.4'`
-3. Tag: `git tag v0.0.4 && git push --follow-tags`
-4. GitHub Actions will auto-build and publish to npm
+2. Review: `git diff`
+3. Commit: `git add -A && git commit -m 'chore: bump version to 0.0.4'`
+4. Tag: `git tag -a v0.0.4 -m "Release v0.0.4"`
+5. Push: `git push --follow-tags`
+
+GitHub Actions will auto-build and publish to npm.
 
 ## TODO
 

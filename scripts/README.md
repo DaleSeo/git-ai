@@ -40,7 +40,7 @@ Verifies that Cargo.toml and npm/package.json have the same version.
 
 ```sh
 # 1. Bump version
-./scripts/bump-version.sh patch   # or: minor, major, 0.0.4
+./scripts/bump-version.sh patch
 
 # 2. Verify changes
 git diff
@@ -50,7 +50,7 @@ git add -A
 git commit -m 'chore: bump version to 0.0.4'
 
 # 4. Tag and push
-git tag v0.0.4
+git tag -a v0.0.4 -m "Release v0.0.4"
 git push --follow-tags
 ```
 
