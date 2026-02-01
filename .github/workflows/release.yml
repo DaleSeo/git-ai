@@ -97,6 +97,28 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      - name: Check version sync
+        run: |
+          CARGO_VERSION=$(grep '^version' Cargo.toml | head -1 | cut -d'"' -f2)
+          NPM_VERSION=$(jq -r .version npm/package.json)
+          TAG_VERSION=${GITHUB_REF#refs/tags/v}
+
+          echo "Cargo.toml version: $CARGO_VERSION"
+          echo "npm package.json version: $NPM_VERSION"
+          echo "Git tag version: $TAG_VERSION"
+
+          if [ "$CARGO_VERSION" != "$NPM_VERSION" ]; then
+            echo "❌ Version mismatch between Cargo.toml ($CARGO_VERSION) and npm/package.json ($NPM_VERSION)"
+            exit 1
+          fi
+
+          if [ "$CARGO_VERSION" != "$TAG_VERSION" ]; then
+            echo "❌ Version mismatch between Cargo.toml ($CARGO_VERSION) and git tag ($TAG_VERSION)"
+            exit 1
+          fi
+
+          echo "✅ All versions are in sync: $CARGO_VERSION"
+
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
