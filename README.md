@@ -4,75 +4,41 @@ AI-powered Git assistant for commit messages, PR descriptions, and more.
 
 ## Installation
 
-### Via npm (recommended)
-
 ```sh
 npm install -g @daleseo/git-ai
 ```
 
-Or run directly with npx:
+Or use with npx:
 
 ```sh
 npx @daleseo/git-ai commit
 ```
 
-### Build from source
+## Quick Start
 
 ```sh
-cargo build --release
-cp target/release/git-ai /usr/local/bin/
-```
-
-Once installed, you can use it as a Git subcommand:
-
-```sh
+# Generate commit message from staged changes
 git ai commit
+
+# Generate PR description
 git ai pr
-git ai config
+
+# Configure LLM provider
+git ai config --provider openai
+git ai config --api-key <YOUR_API_KEY>
 ```
 
 ## Commands
 
-### `git ai config`
-
-Manage git-ai configuration.
-
-```sh
-git ai config                               # Show current configuration
-git ai config --provider openai             # Set LLM provider
-git ai config --model gpt-4o                # Set model
-git ai config --lang ko                     # Set language (en, ko)
-git ai config --format conventional-scoped  # Set commit format
-git ai config --auto-stage always           # Auto-stage behavior
-```
-
-**Format options:**
-- `conventional` (default): `type: description` (no scope)
-- `conventional-scoped`: `type(scope): description` (scope required)
-- `gitmoji`: `✨ feat: description` (emoji + type)
-- `free`: Free-form commit message
-
-**Auto-stage options:**
-- `ask` (default): Prompt to stage unstaged changes (auto-yes in non-TTY)
-- `always`: Automatically stage all changes when no staged changes found
-- `never`: Always require manual staging (show error + help message)
-
-Supported providers:
-
-- `ollama` (default) - Local, offline, free
-- `openai` - Requires API key
-- `anthropic` - Requires API key
-
 ### `git ai commit`
 
-Generate AI-powered commit messages based on staged changes.
+Generate AI-powered commit messages.
 
 ```sh
-git ai commit              # Generate and select commit message
-git ai commit -a           # Stage all changes, then commit
-git ai commit -y           # Auto-confirm with first suggestion
-git ai commit --dry-run    # Print message without committing
-git ai commit --type feat  # Specify conventional commit type
+git ai commit              # Interactive selection
+git ai commit -a           # Stage all changes first
+git ai commit -y           # Auto-confirm
+git ai commit --dry-run    # Preview only
 ```
 
 ### `git ai pr`
@@ -80,44 +46,39 @@ git ai commit --type feat  # Specify conventional commit type
 Generate PR title and description.
 
 ```sh
-git ai pr                  # Compare current branch with main
-git ai pr --base develop   # Specify base branch
+git ai pr                  # Generate PR description
 git ai pr --copy           # Copy to clipboard
 ```
 
-## Configuration
+### `git ai config`
 
-Config file location: `~/.config/git-ai/config.toml`
-
-```toml
-[provider]
-name = "ollama"
-model = "llama3.2"
-ollama_url = "http://localhost:11434"
-# api_key = "sk-..."  # For OpenAI/Anthropic
-
-[options]
-language = "en"          # en, ko
-format = "conventional"  # conventional, conventional-scoped, gitmoji, free
-auto_stage = "ask"       # ask, always, never
-```
-
-## Environment Variables
-
-- `OPENAI_API_KEY` - OpenAI API key (alternative to config file)
-- `ANTHROPIC_API_KEY` - Anthropic API key (alternative to config file)
-
-## Using OpenAI-Compatible Providers
-
-Together AI, Groq, Fireworks, OpenRouter 등 OpenAI 호환 API를 사용하려면:
+Manage configuration.
 
 ```sh
+git ai config              # Show current config
 git ai config --provider openai
-git ai config --base-url https://api.together.xyz/v1
-git ai config --model meta-llama/Llama-3.2-3B-Instruct-Turbo
-git ai config --api-key <YOUR_API_KEY>
+git ai config --model gpt-4o
+git ai config --format gitmoji
 ```
+
+## Supported Providers
+
+- **Ollama** (default) - Local, offline, free
+- **OpenAI** - Requires API key
+- **Anthropic** - Requires API key
+- **OpenAI-compatible** - Together AI, Groq, etc.
+
+## Commit Message Formats
+
+- `conventional` (default) - `feat: add feature`
+- `conventional-scoped` - `feat(api): add feature`
+- `gitmoji` - `✨ feat: add feature`
+- `free` - Free-form
 
 ## License
 
 MIT
+
+---
+
+For detailed documentation, see [CLAUDE.md](./CLAUDE.md).

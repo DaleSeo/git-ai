@@ -6,14 +6,14 @@ AI-powered Git CLI for commit messages, PR descriptions, and more.
 
 - **Repository**: https://github.com/DaleSeo/git-ai
 - **Language**: Rust
-- **Distribution**: npm (`git-ai`) + GitHub Releases
+- **Distribution**: npm (`@daleseo/git-ai`) + GitHub Releases
 
 ## Architecture
 
 ```
 src/
 ├── main.rs           # CLI entry point (clap)
-├── config.rs         # Config management (~/.config/git-ai/config.toml)
+├── config.rs         # Config management + Enums (Language, Format, AutoStage)
 ├── git.rs            # Git command wrapper
 ├── llm/
 │   ├── mod.rs        # LLM provider abstraction
@@ -22,7 +22,7 @@ src/
 │   └── ollama.rs     # Local Ollama
 └── commands/
     ├── config.rs     # git ai config
-    ├── commit.rs     # git ai commit
+    ├── commit.rs     # git ai commit (TTY detection, auto-stage logic)
     └── pr.rs         # git ai pr
 
 npm/                  # npm package wrapper for binary distribution
@@ -31,41 +31,176 @@ npm/                  # npm package wrapper for binary distribution
 
 ## Commands
 
-```sh
-# Configuration
-git ai config                          # Show current configuration
-git ai config --provider openai        # Set LLM provider
-git ai config --auto-stage always      # Auto-stage unstaged changes (ask/always/never)
+### Configuration
 
-# Commit
+```sh
+git ai config                               # Show current configuration
+git ai config --provider openai             # Set LLM provider
+git ai config --model gpt-4o                # Set model
+git ai config --lang ko                     # Language (en, ko)
+git ai config --format gitmoji              # Commit format
+git ai config --auto-stage always           # Auto-stage behavior
+git ai config --base-url https://api.together.xyz/v1  # For OpenAI-compatible providers
+```
+
+### Commit Messages
+
+```sh
 git ai commit                          # Generate commit message from staged diff
 git ai commit -a                       # Stage all changes and commit
+git ai commit -y                       # Auto-confirm with first suggestion
 git ai commit --dry-run                # Preview without committing
+git ai commit --type feat              # Specify conventional commit type
+```
 
-# Pull Request
+### Pull Requests
+
+```sh
 git ai pr                              # Generate PR title and description
+git ai pr --base develop               # Specify base branch
 git ai pr --copy                       # Copy to clipboard
 ```
+
+## Configuration
+
+### Config File
+
+Location: `~/.config/git-ai/config.toml` (Linux/macOS) or `%APPDATA%\git-ai\config.toml` (Windows)
+
+```toml
+[provider]
+name = "ollama"                              # ollama, openai, anthropic
+model = "llama3.2"                           # Model name
+api_key = "sk-..."                           # API key (optional, can use env var)
+base_url = "https://api.together.xyz/v1"     # For OpenAI-compatible providers
+ollama_url = "http://localhost:11434"        # Ollama server URL
+
+[options]
+language = "en"                              # en, ko
+format = "conventional"                      # conventional, conventional-scoped, gitmoji, free
+auto_stage = "ask"                           # ask, always, never
+```
+
+### Environment Variables
+
+Alternative to config file:
+
+```sh
+export OPENAI_API_KEY="sk-..."
+export ANTHROPIC_API_KEY="sk-ant-..."
+```
+
+### Commit Message Formats
+
+#### `conventional` (default)
+
+Simple conventional commits without scope:
+
+```
+feat: add user authentication
+fix: resolve timeout issue
+docs: update README
+```
+
+#### `conventional-scoped`
+
+Conventional commits with scope (required):
+
+```
+feat(auth): add user authentication
+fix(api): resolve timeout issue
+docs(readme): update installation guide
+```
+
+#### `gitmoji`
+
+Gitmoji with conventional commits:
+
+```
+✨ feat: add user authentication
+🐛 fix: resolve timeout issue
+📝 docs: update README
+💄 style: improve UI
+♻️ refactor: simplify logic
+✅ test: add unit tests
+🔧 chore: update dependencies
+```
+
+Gitmoji mapping:
+- ✨ feat (new feature)
+- 🐛 fix (bug fix)
+- 📝 docs (documentation)
+- 💄 style (formatting, styling)
+- ♻️ refactor (code refactoring)
+- ✅ test (adding tests)
+- 🔧 chore (maintenance)
+
+#### `free`
+
+Free-form commit message (no constraints).
+
+### Auto-Stage Behavior
+
+Controls what happens when there are no staged changes:
+
+- `ask` (default): Interactive prompt in TTY, auto-stage in non-TTY
+- `always`: Always auto-stage unstaged changes
+- `never`: Show error + help message (require manual staging)
 
 ## Supported LLM Providers
 
 | Provider    | Config                                                        |
 | ----------- | ------------------------------------------------------------- |
+| Ollama      | `--provider ollama` (default, local, free)                    |
 | OpenAI      | `--provider openai`                                           |
+| Anthropic   | `--provider anthropic`                                        |
 | Together AI | `--provider openai --base-url https://api.together.xyz/v1`    |
 | Groq        | `--provider openai --base-url https://api.groq.com/openai/v1` |
-| Anthropic   | `--provider anthropic`                                        |
-| Ollama      | `--provider ollama`                                           |
+| Fireworks   | `--provider openai --base-url https://api.fireworks.ai/inference/v1` |
+
+### Setup Examples
+
+#### Ollama (Local, Free)
+
+```sh
+# Install Ollama from https://ollama.ai
+ollama pull llama3.2
+
+git ai config --provider ollama
+git ai config --model llama3.2
+```
+
+#### OpenAI
+
+```sh
+git ai config --provider openai
+git ai config --model gpt-4o
+git ai config --api-key sk-...
+```
+
+#### Together AI
+
+```sh
+git ai config --provider openai
+git ai config --base-url https://api.together.xyz/v1
+git ai config --model meta-llama/Llama-3.2-3B-Instruct-Turbo
+git ai config --api-key <YOUR_API_KEY>
+```
+
+#### Anthropic Claude
+
+```sh
+git ai config --provider anthropic
+git ai config --model claude-3-5-sonnet-20241022
+git ai config --api-key sk-ant-...
+```
 
 ## Development
 
-```sh
-# Build
-cargo build --release
+### Build
 
-# Test locally
-./target/release/git-ai --help
-./target/release/git-ai commit --dry-run
+```sh
+cargo build --release
 ```
 
 ### Testing
@@ -116,6 +251,24 @@ git restore README.md
 ./target/release/git-ai commit --yes
 ```
 
+### Testing Auto-Stage Behavior
+
+```sh
+# Set auto-stage to always
+git ai config --auto-stage always
+
+# Test with unstaged changes (should auto-stage)
+echo "# Test" >> README.md
+./target/release/git-ai commit --dry-run
+
+# Set to never (should show error)
+git ai config --auto-stage never
+./target/release/git-ai commit  # Error: No staged changes
+
+# Reset to default
+git ai config --auto-stage ask
+```
+
 ## Deployment
 
 ### Version Management
@@ -148,6 +301,7 @@ GitHub Actions will auto-build and publish to npm.
 ## TODO
 
 - [ ] npm 배포 (NPM_TOKEN 설정 필요)
+- [ ] Conventional format scope 프롬프트 개선 (여전히 scope 포함됨)
 - [ ] `git ai review` - 코드 리뷰 피드백
 - [ ] `git ai changelog` - CHANGELOG 자동 생성
 - [ ] `git ai explain` - 커밋/diff 설명
