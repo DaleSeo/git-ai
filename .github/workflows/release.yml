@@ -133,8 +133,6 @@ jobs:
       - name: Publish platform package
         working-directory: npm/platforms/${{ matrix.platform }}
         run: npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
   publish-npm:
     name: Publish main package to npm
