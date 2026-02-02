@@ -1,0 +1,18 @@
+{
+  "name": "@daleseo/git-ai-darwin-x64",
+  "version": "0.1.1",
+  "description": "git-ai binary for macOS x64",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/DaleSeo/git-ai"
+  },
+  "os": ["darwin"],
+  "cpu": ["x64"],
+  "files": [
+    "bin/git-ai"
+  ],
+  "engines": {
+    "node": ">=16"
+  }
+}

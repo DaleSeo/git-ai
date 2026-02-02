@@ -25,7 +25,12 @@ src/
     ├── commit.rs     # git ai commit (TTY detection, auto-stage logic)
     └── pr.rs         # git ai pr
 
-npm/                  # npm package wrapper for binary distribution
+npm/                  # Main npm package (wrapper)
+npm/platforms/        # Platform-specific packages with binaries
+  ├── darwin-arm64/   # macOS Apple Silicon
+  ├── darwin-x64/     # macOS Intel
+  ├── linux-x64/      # Linux x64
+  └── windows-x64/    # Windows x64
 .github/workflows/    # GitHub Actions for cross-platform builds
 ```
 
@@ -273,7 +278,7 @@ git ai config --auto-stage ask
 
 ### Version Management
 
-Update version in both Cargo.toml and npm/package.json:
+Update version in Cargo.toml, npm/package.json, and all platform packages:
 
 ```sh
 ./scripts/bump-version.sh patch   # 0.0.3 → 0.0.4
@@ -296,7 +301,31 @@ Verify versions are in sync:
 4. Tag: `git tag -a v0.0.4 -m "Release v0.0.4"`
 5. Push: `git push --follow-tags`
 
-GitHub Actions will auto-build and publish to npm.
+GitHub Actions will:
+1. Build binaries for all platforms
+2. Create GitHub Release with binary archives
+3. Publish platform packages to npm (`@daleseo/git-ai-{platform}-{arch}`)
+4. Publish main package to npm (`@daleseo/git-ai`)
+
+### npm Package Structure
+
+The npm distribution uses platform-specific packages (similar to esbuild/swc):
+
+- **Main package** (`@daleseo/git-ai`): Lightweight wrapper (~1.3KB)
+  - Detects platform and finds the appropriate binary
+  - Declares platform packages as `optionalDependencies`
+
+- **Platform packages**: Binary-only packages (~2MB each)
+  - `@daleseo/git-ai-darwin-arm64`: macOS Apple Silicon
+  - `@daleseo/git-ai-darwin-x64`: macOS Intel
+  - `@daleseo/git-ai-linux-x64`: Linux x64
+  - `@daleseo/git-ai-windows-x64`: Windows x64
+
+Benefits:
+- ✅ Fast installation (no postinstall downloads)
+- ✅ Uses npm CDN (better reliability)
+- ✅ Only downloads platform-specific binary
+- ✅ Works in offline/restricted environments
 
 ## TODO
 

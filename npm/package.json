@@ -20,16 +20,20 @@
     "git-ai": "./bin.js"
   },
   "scripts": {
-    "postinstall": "node install.js",
     "prepublishOnly": "cp ../README.md README.md && cp ../LICENSE LICENSE"
   },
   "files": [
     "bin.js",
     "index.js",
-    "install.js",
     "README.md",
     "LICENSE"
   ],
+  "optionalDependencies": {
+    "@daleseo/git-ai-darwin-arm64": "0.1.1",
+    "@daleseo/git-ai-darwin-x64": "0.1.1",
+    "@daleseo/git-ai-linux-x64": "0.1.1",
+    "@daleseo/git-ai-windows-x64": "0.1.1"
+  },
   "engines": {
     "node": ">=16"
   }

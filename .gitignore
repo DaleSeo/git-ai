@@ -1,2 +1,6 @@
 /target
 npm/README.md
+npm/LICENSE
+npm/*.tgz
+npm/platforms/**/bin/
+npm/platforms/**/*.tgz

@@ -58,11 +58,30 @@ jobs:
           cd dist
           tar -czf ..\git-ai-${{ matrix.name }}.tar.gz git-ai.exe
 
+      - name: Prepare platform package (Unix)
+        if: runner.os != 'Windows'
+        run: |
+          mkdir -p npm/platforms/${{ matrix.name }}/bin
+          cp target/${{ matrix.target }}/release/git-ai npm/platforms/${{ matrix.name }}/bin/
+          chmod +x npm/platforms/${{ matrix.name }}/bin/git-ai
+
+      - name: Prepare platform package (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          mkdir npm\platforms\${{ matrix.name }}\bin
+          copy target\${{ matrix.target }}\release\git-ai.exe npm\platforms\${{ matrix.name }}\bin\
+
       - name: Upload artifact
         uses: actions/upload-artifact@v6
         with:
           name: git-ai-${{ matrix.name }}
           path: git-ai-${{ matrix.name }}.tar.gz
+
+      - name: Upload platform package
+        uses: actions/upload-artifact@v6
+        with:
+          name: platform-${{ matrix.name }}
+          path: npm/platforms/${{ matrix.name }}
 
   release:
     name: Release
@@ -86,9 +105,40 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  publish-npm:
-    name: Publish to npm
+  publish-npm-platforms:
+    name: Publish platform packages to npm
     needs: release
+    runs-on: ubuntu-latest
+    environment: npm
+    permissions:
+      contents: read
+      id-token: write
+    strategy:
+      matrix:
+        platform: [darwin-arm64, darwin-x64, linux-x64, windows-x64]
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+
+      - name: Download platform artifact
+        uses: actions/download-artifact@v7
+        with:
+          name: platform-${{ matrix.platform }}
+          path: npm/platforms/${{ matrix.platform }}
+
+      - name: Publish platform package
+        working-directory: npm/platforms/${{ matrix.platform }}
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  publish-npm:
+    name: Publish main package to npm
+    needs: publish-npm-platforms
     runs-on: ubuntu-latest
     environment: npm
     permissions:
@@ -124,6 +174,8 @@ jobs:
         with:
           node-version: "24"
 
-      - name: Publish to npm
+      - name: Publish main package
         working-directory: npm
         run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

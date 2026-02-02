@@ -54,6 +54,16 @@ else
   rm Cargo.toml.bak
 fi
 
+# Update platform packages
+echo "Updating platform packages..."
+for platform_dir in npm/platforms/*/; do
+  if [ -f "${platform_dir}package.json" ]; then
+    cd "$platform_dir"
+    npm version "$NEW_VERSION" --no-git-tag-version
+    cd - > /dev/null
+  fi
+done
+
 echo "✓ Version bumped to $NEW_VERSION"
 echo ""
 echo "Next steps:"

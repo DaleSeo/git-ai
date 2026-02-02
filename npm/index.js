@@ -30,18 +30,29 @@ function getPlatformInfo() {
 
 function getBinaryPath() {
   const { platform, arch } = getPlatformInfo();
-  const binaryDir = path.join(__dirname, "bin");
-  const ext = platform === "windows" ? ".exe" : "";
-  const binaryPath = path.join(binaryDir, `${BINARY_NAME}${ext}`);
 
-  if (!fs.existsSync(binaryPath)) {
-    throw new Error(
-      `Binary not found at ${binaryPath}. ` +
-        `Please run 'npm install' to download the binary.`,
-    );
+  // Try to find binary in platform-specific package
+  const ext = platform === "windows" ? ".exe" : "";
+  const packageName = `@daleseo/git-ai-${platform}-${arch}`;
+
+  try {
+    // Look for the platform package in node_modules
+    const platformPackagePath = require.resolve(`${packageName}/package.json`);
+    const platformPackageDir = path.dirname(platformPackagePath);
+    const binaryPath = path.join(platformPackageDir, "bin", `${BINARY_NAME}${ext}`);
+
+    if (fs.existsSync(binaryPath)) {
+      return binaryPath;
+    }
+  } catch (error) {
+    // Platform package not found, continue to error message
   }
 
-  return binaryPath;
+  throw new Error(
+    `Platform-specific package not found: ${packageName}\n` +
+    `This usually means the package was not installed correctly.\n` +
+    `Please try reinstalling: npm install -g @daleseo/git-ai`
+  );
 }
 
 module.exports = { getBinaryPath, getPlatformInfo, BINARY_NAME };
