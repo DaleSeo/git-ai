@@ -1,14 +1,18 @@
 {
   "name": "@daleseo/git-ai-linux-x64",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "git-ai binary for Linux x64",
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "https://github.com/DaleSeo/git-ai"
   },
-  "os": ["linux"],
-  "cpu": ["x64"],
+  "os": [
+    "linux"
+  ],
+  "cpu": [
+    "x64"
+  ],
   "files": [
     "bin/git-ai"
   ],
