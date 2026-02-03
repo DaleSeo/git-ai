@@ -260,11 +260,16 @@ Output format (follow EXACTLY):
     )
 }
 
-fn truncate_diff(diff: &str, max_chars: usize) -> &str {
-    if diff.len() <= max_chars {
+fn truncate_diff(diff: &str, max_bytes: usize) -> &str {
+    if diff.len() <= max_bytes {
         diff
     } else {
-        &diff[..max_chars]
+        // Find the last valid UTF-8 character boundary before max_bytes
+        let mut end = max_bytes;
+        while end > 0 && !diff.is_char_boundary(end) {
+            end -= 1;
+        }
+        &diff[..end]
     }
 }
 
@@ -298,4 +303,108 @@ fn parse_suggestions(response: &str) -> Vec<String> {
     }
 
     suggestions
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn truncate_diff_ascii_only() {
+        let text = "hello world";
+        assert_eq!(truncate_diff(text, 5), "hello");
+        assert_eq!(truncate_diff(text, 11), "hello world");
+        assert_eq!(truncate_diff(text, 100), "hello world");
+    }
+
+    #[test]
+    fn truncate_diff_multibyte_boundary() {
+        // '░' is 3 bytes (E2 96 91)
+        // "abc░def" = a(0) b(1) c(2) ░(3,4,5) d(6) e(7) f(8)
+        let text = "abc░def";
+        assert_eq!(text.len(), 9);
+
+        assert_eq!(truncate_diff(text, 3), "abc");
+        assert_eq!(truncate_diff(text, 4), "abc"); // middle of ░, back to 3
+        assert_eq!(truncate_diff(text, 5), "abc"); // middle of ░, back to 3
+        assert_eq!(truncate_diff(text, 6), "abc░");
+        assert_eq!(truncate_diff(text, 7), "abc░d");
+    }
+
+    #[test]
+    fn truncate_diff_korean() {
+        // Korean characters are 3 bytes each
+        // "안녕" = 안(0,1,2) 녕(3,4,5)
+        let text = "안녕";
+        assert_eq!(text.len(), 6);
+
+        assert_eq!(truncate_diff(text, 1), ""); // middle of 안, back to 0
+        assert_eq!(truncate_diff(text, 2), ""); // middle of 안, back to 0
+        assert_eq!(truncate_diff(text, 3), "안");
+        assert_eq!(truncate_diff(text, 4), "안"); // middle of 녕
+        assert_eq!(truncate_diff(text, 6), "안녕");
+    }
+
+    #[test]
+    fn truncate_diff_emoji() {
+        // '🎉' is 4 bytes (F0 9F 8E 89)
+        let text = "a🎉b";
+        assert_eq!(text.len(), 6);
+
+        assert_eq!(truncate_diff(text, 1), "a");
+        assert_eq!(truncate_diff(text, 2), "a"); // middle of 🎉
+        assert_eq!(truncate_diff(text, 3), "a"); // middle of 🎉
+        assert_eq!(truncate_diff(text, 4), "a"); // middle of 🎉
+        assert_eq!(truncate_diff(text, 5), "a🎉");
+        assert_eq!(truncate_diff(text, 6), "a🎉b");
+    }
+
+    #[test]
+    fn truncate_diff_empty() {
+        assert_eq!(truncate_diff("", 0), "");
+        assert_eq!(truncate_diff("", 10), "");
+    }
+
+    #[test]
+    fn truncate_diff_zero_limit() {
+        assert_eq!(truncate_diff("hello", 0), "");
+        assert_eq!(truncate_diff("안녕", 0), "");
+    }
+
+    #[test]
+    fn truncate_diff_original_panic_case() {
+        // Simulate the original panic: 4000 bytes with multi-byte char at boundary
+        let text = "x".repeat(3999) + "░" + "more";
+        assert_eq!(text.len(), 4006);
+
+        let result = truncate_diff(&text, 4000);
+        assert_eq!(result.len(), 3999); // backs up to before ░
+        assert!(result.ends_with('x'));
+    }
+
+    #[test]
+    fn parse_suggestions_numbered_list() {
+        let response = "1. feat: add feature\n2. fix: bug fix\n3. docs: update docs";
+        let suggestions = parse_suggestions(response);
+        assert_eq!(suggestions.len(), 3);
+        assert_eq!(suggestions[0], "feat: add feature");
+        assert_eq!(suggestions[1], "fix: bug fix");
+        assert_eq!(suggestions[2], "docs: update docs");
+    }
+
+    #[test]
+    fn parse_suggestions_with_backticks() {
+        let response = "1. `feat: add feature`\n2. `fix: bug fix`";
+        let suggestions = parse_suggestions(response);
+        assert_eq!(suggestions[0], "feat: add feature");
+        assert_eq!(suggestions[1], "fix: bug fix");
+    }
+
+    #[test]
+    fn parse_suggestions_fallback() {
+        let response = "feat: simple message";
+        let suggestions = parse_suggestions(response);
+        assert_eq!(suggestions.len(), 1);
+        assert_eq!(suggestions[0], "feat: simple message");
+    }
 }
