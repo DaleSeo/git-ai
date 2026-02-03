@@ -1,6 +1,6 @@
 {
   "name": "@daleseo/git-ai-darwin-arm64",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "git-ai binary for macOS ARM64",
   "license": "MIT",
   "repository": {
